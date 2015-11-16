@@ -1,5 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var _ = require('underscore');
+
 var app = express();
 var PORT = process.env.PORT || 3500;
 var todos = [];
@@ -19,13 +21,19 @@ app.get('/todos',function(request,response){
 //GET /todos/:id
 app.get('/todos/:id',function(request,response){
     var todoId = parseInt(request.params.id,10);
-    var matchedTodo;
+
+    // Normal approach
+    /*var matchedTodo;
 
     todos.forEach(function(todos){
         if(todoId === todos.id){
             matchedTodo = todos;
         }
     });
+   */
+
+    //with underscore approach
+    var matchedTodo = _.findWhere(todos,{id: todoId});
 
     if (matchedTodo) {
         response.json(matchedTodo)
@@ -34,10 +42,22 @@ app.get('/todos/:id',function(request,response){
     }
 });
 
+
+
 //POST /todos
 app.post('/todos',function(request,response){
-    var body = request.body;
+    //var body = request.body;
 
+    var body = _.pick(request.body,'description','completed');
+
+
+    if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0){
+        console.log('Control Came inside');
+        return response.status(400).send();
+    }
+
+    body.description = body.description.trim();
+    console.log("Trimmed body is " + body.description);
     body.id = toDoNextId++;
 
     todos.push(body);
